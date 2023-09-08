@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-openapi/validate"
 	"github.com/go-swagger/go-swagger/cmd/swagger/commands/generate"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
@@ -178,10 +179,50 @@ func SearchProduct() gin.HandlerFunc {
 		}
 		defer cancel()
 		c.IndentedJSON(200, productList)
+
 	}
 
 }
 
 func SearchProductByQuery() gin.HHandlerFunc {
+	return func (c *gin.Context)  {
+		c.Header("Content-Type", "application/json")
+		var searchProduct []models.Product
+		queyParam := c.Query("name")
+
+		//you want to check if its empty
+		if queyParam == "" {
+			log.Println("query not found")
+			
+			c.JSON(http.StatusNotFound, gin.H("Errror":"Invalid search index"))
+			c.Abort()
+			return
+		}
+		var ctc, cancel = context.WithTimeout(contect.Background(),100*time.Second)
+
+		defer cancel()
+
+		cursorDb, err := productCollection.Find(ctx, bson.M{"product_name":bson.M{"$regex":queyParam}})
+		if err != nil {
+			c.IndentedJSON(404, "something went wrong while fetching the data")
+		}
+
+		err := cursorDb.All(ctx, &searchProduct)
+		if err != nil {
+			log.Println(err)
+			c.IndentedJSON(400,"inavlid")
+			return
+		}
+		defer cursorDb.Close(ctx)
+
+		if err := cursorDb.Err(); err != nil {
+			log.Println(err)
+			c.IndentedJSON(400, "invalid requsest")
+			return
+		}
+
+		defer cancel()
+		c.IndentedJSON(200, searchProduct)
+	}
 
 }
