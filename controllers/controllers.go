@@ -20,7 +20,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 var UserCollction *mongo.Collection = database.UserData(database.Client, "Users")
-var productCollection *mongo.Collection = database.ProductData(database.Client, "Products")
+var ProductCollection *mongo.Collection = database.ProductData(database.Client, "Products")
 var validate = validator.New()
 
 func HashPassword(password string)string{
@@ -147,8 +147,6 @@ func  Login() gin.HandlerFunc {
  	
 }
 
-
-
 func ProductViewerAdmin() gin.HandlerFunc {
 
 }
@@ -160,7 +158,7 @@ func SearchProduct() gin.HandlerFunc {
 		var ctx, cancel = context.WithTimeout(context.Background(), 100* time.Second)
 
 		defer cancel()
-		cursor, err := productCollection.Find(ctx,bson.D{{}})
+		cursor, err := ProductCollection.Find(ctx,bson.D{{}})
 		if err != nil {
 			c.IndentedJSON(http.StatusInternalServerError, "something went wrong plz try again")
 			return
@@ -202,7 +200,7 @@ func SearchProductByQuery() gin.HHandlerFunc {
 
 		defer cancel()
 
-		cursorDb, err := productCollection.Find(ctx, bson.M{"product_name":bson.M{"$regex":queyParam}})
+		cursorDb, err := ProductCollection.Find(ctx, bson.M{"product_name":bson.M{"$regex":queyParam}})
 		if err != nil {
 			c.IndentedJSON(404, "something went wrong while fetching the data")
 		}
